@@ -1,0 +1,9 @@
+{
+  "bedrock_arrival": {
+    "category": "hostile",
+    "sounds": [
+      "manfromthefog_custom:bedrock_arrival"
+    ],
+    "subtitle": "Man From The Fog yaklaşıyor..."
+  }
+}
