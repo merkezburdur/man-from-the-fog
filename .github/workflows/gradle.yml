@@ -15,8 +15,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+      - name: Build with Gradle 8.8
+        run: |
+          gradle wrapper --gradle-version 8.8
+          bash gradlew build --no-daemon
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
