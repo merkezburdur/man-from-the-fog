@@ -1,20 +1,32 @@
-{
+{{
   "schemaVersion": 1,
-  "id": "manfromthefog_custom",
+  "id": "fogmod",
   "version": "1.0.0",
-  "name": "Man From The Fog Custom",
-  "description": "Custom Fabric 1.20.1 sound and lightning spawn mod.",
-  "authors": ["User"],
+  "name": "The Man From The Fog By gereksizbiri35",
+  "description": "Adds a terrifying entity that stalks you from the fog.",
+  "authors": [
+    "Gereksizbiri35 also gerekiszıp"
+  ],
+  "contact": {},
   "license": "MIT",
+  "icon": "assets/fogmod/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
       "com.fogmod.FogMod"
     ]
   },
+  "mixins": [
+    "fogmod.mixins.json"
+  ],
   "depends": {
-    "fabricloader": ">=0.14.22",
+    "fabricloader": ">=0.14.0",
     "minecraft": "~1.20.1",
     "java": ">=17"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": ["library"]
+    }
   }
 }
