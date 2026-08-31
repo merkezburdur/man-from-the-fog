@@ -1,4 +1,4 @@
-name: Build Fabric Mod
+name: Build Mod
 
 on: [push, pull_request]
 
@@ -15,19 +15,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/actions/wrapper-validation@v3
+      - name: Generate Wrapper and Build
+        run: |
+          gradle wrapper --gradle-version 8.5
+          chmod +x gradlew
+          ./gradlew build --no-daemon
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew || true
-
-      - name: Build with Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          arguments: build
-
-      - name: Upload Build Artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: manufactured-mod-jar
+          name: mod-jar
           path: build/libs/*.jar
