@@ -81,4 +81,3 @@ public class FogMod implements ModInitializer {
         }
     }
 }
-[cite: 1]
