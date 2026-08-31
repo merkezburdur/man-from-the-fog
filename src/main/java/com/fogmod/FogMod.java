@@ -32,7 +32,8 @@ public class FogMod implements ModInitializer {
         Registry.register(Registries.SOUND_EVENT, ARRIVAL_SOUND_ID, ARRIVAL_SOUND_EVENT);
 
         ServerTickEvents.END_WORLD_TICK.register(world -> {
-            if (!world.isClient() && world instanceof ServerWorld serverWorld) {
+            if (!world.isClient()) {
+                ServerWorld serverWorld = (ServerWorld) world;
                 
                 // Doğma Zamanlayıcısı
                 spawnTimer++;
@@ -80,3 +81,4 @@ public class FogMod implements ModInitializer {
         }
     }
 }
+```[cite: 1]
