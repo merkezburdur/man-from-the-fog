@@ -1,6 +1,7 @@
 package com.fogmod;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
@@ -9,11 +10,15 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.server.network.ServerPlayerEntity;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.server.command.ServerCommandSource;
+import static net.minecraft.server.command.CommandManager.literal;
 
 public class FogMod implements ModInitializer {
     public static final String MOD_ID = "manfromthefog_custom";
@@ -31,12 +36,28 @@ public class FogMod implements ModInitializer {
     public void onInitialize() {
         Registry.register(Registries.SOUND_EVENT, ARRIVAL_SOUND_ID, ARRIVAL_SOUND_EVENT);
 
+        // /fogspawn komutunu kaydediyoruz
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            dispatcher.register(literal("fogspawn")
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    ServerPlayerEntity player = source.getPlayer();
+                    if (player != null) {
+                        ServerWorld world = player.getServerWorld();
+                        startArrivalSequence(world, player);
+                        source.sendFeedback(() -> Text.literal("§4[FogMod] Korku sekansı tetiklendi!"), false);
+                    }
+                    return 1;
+                })
+            );
+        });
+
         ServerTickEvents.END_WORLD_TICK.register(world -> {
             if (!world.isClient()) {
                 ServerWorld serverWorld = (ServerWorld) world;
                 
                 spawnTimer++;
-                if (spawnTimer >= 6000) { // Her 5 dakikada bir
+                if (spawnTimer >= 6000) { // Her 5 dakikada bir otomatik tetiklenme
                     spawnTimer = 0;
                     for (ServerPlayerEntity player : serverWorld.getPlayers()) {
                         startArrivalSequence(serverWorld, player);
@@ -78,11 +99,10 @@ public class FogMod implements ModInitializer {
                 world.spawnEntity(lightning);
             }
 
-            // Yaratığın Doğması (Şimdilik zombi bazlı, kendi entity sınıfını hazırladığında burayı onunla değiştirebilirsin)
+            // Yaratığın Doğması
             ZombieEntity monster = EntityType.ZOMBIE.create(world);
             if (monster != null) {
                 monster.refreshPositionAfterTeleport(Vec3d.ofBottomCenter(pos));
-                // İstersen buraya yaratığın özelliklerini (can, hız, görünmezlik vb.) ekleyebilirsin
                 world.spawnEntity(monster);
             }
         }
