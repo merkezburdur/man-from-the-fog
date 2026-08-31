@@ -1,85 +1,76 @@
-package com.manfromthefog.init;
+package com.fogmod;
 
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.Commands;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.network.chat.Component;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.sounds.SoundEvents;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 
-// Modunun Entity ve Sound kayıt sınıflarını buraya import et:
-// import com.manfromthefog.entity.TheFogManEntity;
-// import com.manfromthefog.init.SoundRegistry;
+public class FogMod implements ModInitializer {
 
-public class ModCommands {
+    @Override
+    public void onInitialize() {
+        // Komutları Fabric dinleyicisine kaydet
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            ModCommands.register(dispatcher);
+        });
+    }
+}
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+// Komutların yönetildiği sınıf
+class ModCommands {
+
+    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         
-        // 1. /fogspawn Komutu
+        // 1. /fogspawn
         dispatcher.register(
-            Commands.literal("fogspawn")
-                .requires(source -> source.hasPermission(2)) // OP yetkisi
-                .executes(context -> spawnFogMan(context.getSource()))
+            CommandManager.literal("fogspawn")
+                .requires(source -> source.hasPermissionLevel(2))
+                .executes(context -> spawnEntity(context.getSource()))
         );
 
-        // 2. /fogman spawn Komutu
+        // 2. /fogman spawn
         dispatcher.register(
-            Commands.literal("fogman")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("spawn")
-                    .executes(context -> spawnFogMan(context.getSource()))
+            CommandManager.literal("fogman")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("spawn")
+                    .executes(context -> spawnEntity(context.getSource()))
                 )
         );
 
-        // 3. /manfromthefog spawn Komutu
+        // 3. /manfromthefog spawn
         dispatcher.register(
-            Commands.literal("manfromthefog")
-                .requires(source -> source.hasPermission(2))
-                .then(Commands.literal("spawn")
-                    .executes(context -> spawnFogMan(context.getSource()))
+            CommandManager.literal("manfromthefog")
+                .requires(source -> source.hasPermissionLevel(2))
+                .then(CommandManager.literal("spawn")
+                    .executes(context -> spawnEntity(context.getSource()))
                 )
         );
     }
 
-    // Yaratığı oyuncunun konumunda oluşturan ana fonksiyon
-    private static int spawnFogMan(CommandSourceStack source) {
+    private static int spawnEntity(ServerCommandSource source) {
         try {
-            ServerPlayer player = source.getPlayerOrException();
-            ServerLevel level = player.getLevel();
+            ServerPlayerEntity player = source.getPlayerOrThrow();
+            ServerWorld world = player.getServerWorld();
 
-            // Yaratık nesnesini oluştur
-            TheFogManEntity fogMan = EntityRegistry.FOG_MAN.get().create(level);
-
-            if (fogMan != null) {
-                // Oyuncunun tam konumuna ve bakış açısına yerleştir
-                fogMan.moveTo(
+            var entity = EntityRegistry.FOG_MAN.create(world);
+            if (entity != null) {
+                entity.refreshPositionAndAngles(
                     player.getX(), 
                     player.getY(), 
                     player.getZ(), 
-                    player.getYRot(), 
-                    player.getXRot()
+                    player.getYaw(), 
+                    player.getPitch()
                 );
-                
-                // Dünyaya ekle
-                level.addFreshEntity(fogMan);
-
-                // Korku sesini çal (bedrock_arrival.ogg veya thunder)
-                level.playSound(
-                    null, 
-                    player.blockPosition(), 
-                    SoundRegistry.BEDROCK_ARRIVAL.get(), 
-                    SoundSource.HOSTILE, 
-                    1.0F, 
-                    1.0F
-                );
-
-                source.sendSuccess(Component.literal("§c[Man From The Fog] Sislerin içinden çağrıldı!"), true);
+                world.spawnEntity(entity);
+                source.sendFeedback(() -> Text.literal("§c[Man From The Fog] Sislerin içinden çağrıldı!"), false);
                 return 1;
             }
         } catch (Exception e) {
-            source.sendFailure(Component.literal("§c[Hata] Yaratık çağrılamadı. Oyun modunda / yetkide sorun olabilir."));
+            source.sendError(Text.literal("§c[Hata] Yaratık çağrılamadı!"));
         }
         return 0;
     }
