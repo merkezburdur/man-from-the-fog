@@ -8,6 +8,9 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.entity.EntityType;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.Identifier;
 
 public class FogMod implements ModInitializer {
 
@@ -20,7 +23,6 @@ public class FogMod implements ModInitializer {
     }
 }
 
-// Komutların yönetildiği sınıf
 class ModCommands {
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
@@ -56,21 +58,31 @@ class ModCommands {
             ServerPlayerEntity player = source.getPlayerOrThrow();
             ServerWorld world = player.getServerWorld();
 
-            var entity = EntityRegistry.FOG_MAN.create(world);
-            if (entity != null) {
-                entity.refreshPositionAndAngles(
-                    player.getX(), 
-                    player.getY(), 
-                    player.getZ(), 
-                    player.getYaw(), 
-                    player.getPitch()
-                );
-                world.spawnEntity(entity);
-                source.sendFeedback(() -> Text.literal("§c[Man From The Fog] Sislerin içinden çağrıldı!"), false);
-                return 1;
+            // Modun kaydettiği entity'yi dinamik olarak çağırır
+            EntityType<?> fogManType = Registries.ENTITY_TYPE.get(new Identifier("fogmod", "fog_man"));
+            
+            if (fogManType == null) {
+                fogManType = Registries.ENTITY_TYPE.get(new Identifier("manfromthefog", "fog_man"));
             }
+
+            if (fogManType != null) {
+                var entity = fogManType.create(world);
+                if (entity != null) {
+                    entity.refreshPositionAndAngles(
+                        player.getX(), 
+                        player.getY(), 
+                        player.getZ(), 
+                        player.getYaw(), 
+                        player.getPitch()
+                    );
+                    world.spawnEntity(entity);
+                    source.sendFeedback(() -> Text.literal("§c[Man From The Fog] Sislerin içinden çağrıldı!"), false);
+                    return 1;
+                }
+            }
+            source.sendError(Text.literal("§c[Hata] Yaratık kimliği (Entity ID) bulunamadı!"));
         } catch (Exception e) {
-            source.sendError(Text.literal("§c[Hata] Yaratık çağrılamadı!"));
+            source.sendError(Text.literal("§c[Hata] Yaratık çağrılırken bir sorun oluştu!"));
         }
         return 0;
     }
