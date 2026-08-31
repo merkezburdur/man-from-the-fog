@@ -1,26 +1,32 @@
+pluginManagement {
+	repositories {
+		maven { url 'https://maven.fabricmc.net/' }
+		gradlePluginPortal()
+	}
+}
 
 plugins {
 	id 'fabric-loom' version '1.6-SNAPSHOT'
 	id 'maven-publish'
 }
 
-version = project.mod_version
-group = project.maven_group
+version = project.hasProperty('mod_version') ? project.mod_version : '1.0.0'
+group = project.hasProperty('maven_group') ? project.maven_group : 'com.example'
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = project.hasProperty('archives_base_name') ? project.archives_base_name : 'man-from-the-fog'
 }
 
 repositories {
-	// Özel kütüphane depolarını buraya ekleyebilirsin
+	mavenCentral()
+	maven { url 'https://maven.fabricmc.net/' }
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	minecraft "com.mojang:minecraft:1.20.1"
+	mappings "net.fabricmc:yarn:1.20.1+build.10:v2"
+	modImplementation "net.fabricmc:fabric-loader:0.14.21"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:0.83.0+1.20.1"
 }
 
 processResources {
@@ -37,13 +43,6 @@ tasks.withType(JavaCompile).configureEach {
 
 java {
 	withSourcesJar()
-
 	sourceCompatibility = JavaVersion.VERSION_17
 	targetCompatibility = JavaVersion.VERSION_17
-}
-
-jar {
-	from("LICENSE") {
-		rename { "${it}_${project.archives_base_name}"}
-	}
 }
