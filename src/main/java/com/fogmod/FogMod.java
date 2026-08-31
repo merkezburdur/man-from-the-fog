@@ -16,41 +16,34 @@ public class FogMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // Komutları Fabric dinleyicisine kaydet
+        // Komutları oyun başladığında kaydet
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            ModCommands.register(dispatcher);
+            
+            // 1. /fogspawn
+            dispatcher.register(
+                CommandManager.literal("fogspawn")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .executes(context -> spawnEntity(context.getSource()))
+            );
+
+            // 2. /fogman spawn
+            dispatcher.register(
+                CommandManager.literal("fogman")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .then(CommandManager.literal("spawn")
+                        .executes(context -> spawnEntity(context.getSource()))
+                    )
+            );
+
+            // 3. /manfromthefog spawn
+            dispatcher.register(
+                CommandManager.literal("manfromthefog")
+                    .requires(source -> source.hasPermissionLevel(2))
+                    .then(CommandManager.literal("spawn")
+                        .executes(context -> spawnEntity(context.getSource()))
+                    )
+            );
         });
-    }
-}
-
-class ModCommands {
-
-    public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-        
-        // 1. /fogspawn
-        dispatcher.register(
-            CommandManager.literal("fogspawn")
-                .requires(source -> source.hasPermissionLevel(2))
-                .executes(context -> spawnEntity(context.getSource()))
-        );
-
-        // 2. /fogman spawn
-        dispatcher.register(
-            CommandManager.literal("fogman")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.literal("spawn")
-                    .executes(context -> spawnEntity(context.getSource()))
-                )
-        );
-
-        // 3. /manfromthefog spawn
-        dispatcher.register(
-            CommandManager.literal("manfromthefog")
-                .requires(source -> source.hasPermissionLevel(2))
-                .then(CommandManager.literal("spawn")
-                    .executes(context -> spawnEntity(context.getSource()))
-                )
-        );
     }
 
     private static int spawnEntity(ServerCommandSource source) {
@@ -58,7 +51,7 @@ class ModCommands {
             ServerPlayerEntity player = source.getPlayerOrThrow();
             ServerWorld world = player.getServerWorld();
 
-            // Modun kaydettiği entity'yi dinamik olarak çağırır
+            // Modun eklediği yaratığı ID üzerinden arar
             EntityType<?> fogManType = Registries.ENTITY_TYPE.get(new Identifier("fogmod", "fog_man"));
             
             if (fogManType == null) {
@@ -80,9 +73,9 @@ class ModCommands {
                     return 1;
                 }
             }
-            source.sendError(Text.literal("§c[Hata] Yaratık kimliği (Entity ID) bulunamadı!"));
+            source.sendError(Text.literal("§c[Hata] Yaratık ID'si bulunamadı!"));
         } catch (Exception e) {
-            source.sendError(Text.literal("§c[Hata] Yaratık çağrılırken bir sorun oluştu!"));
+            source.sendError(Text.literal("§c[Hata] Yaratık çağrılırken sorun oluştu!"));
         }
         return 0;
     }
